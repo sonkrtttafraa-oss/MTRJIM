@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="أحاسيس">
+<link rel="manifest" href="manifest.json">
+<title>مترجم الأحاسيس — تطبيق الأم</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ===== المتغيرات - الألوان والخطوط ===== */
+:root {
+  --bg: #0a0a1a;           /* خلفية داكنة */
+  --card: #13132a;         /* لون البطاقات */
+  --surface: #1c1c3a;      /* لون الأسطح */
+  --purple: #c084fc;       /* البنفسجي الرئيسي */
+  --purple-dark: #7c3aed;
+  --pink: #f472b6;         /* الوردي للتنبيهات */
+  --green: #34d399;        /* الأخضر للإيجابي */
+  --amber: #fbbf24;        /* الأصفر للتحذير */
+  --red: #f87171;          /* الأحمر للطوارئ */
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --border: rgba(192,132,252,0.15);
+  --radius: 20px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Tajawal', sans-serif;
+  min-height: 100vh;
+  max-width: 430px;    /* عرض الهاتف */
+  margin: 0 auto;
+  padding-bottom: 80px; /* مساحة للشريط السفلي */
+}
+
+/* ===== الهيدر ===== */
+.header {
+  background: linear-gradient(135deg, #1a0533, #0a0a1a);
+  padding: 50px 20px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before {
+  /* دائرة زخرفية في الخلفية */
+  content: '';
+  position: absolute;
+  top: -60px; left: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(192,132,252,0.2), transparent);
+  border-radius: 50%;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.app-name {
+  font-size: 20px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.notif-btn {
+  width: 40px; height: 40px;
+  background: rgba(192,132,252,0.1);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 18px;
+  transition: background 0.2s;
+}
+.notif-btn:active { background: rgba(192,132,252,0.25); }
+
+/* بطاقة الحالة الحالية */
+.current-card {
+  background: rgba(192,132,252,0.08);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+}
+
+.current-label { font-size: 12px; color: var(--muted); margin-bottom: 10px; letter-spacing: 1px; }
+
+.current-emoji { font-size: 56px; margin-bottom: 8px; display: block; }
+
+.current-emotion {
+  font-size: 22px; font-weight: 700; color: #fff;
+  text-transform: capitalize; margin-bottom: 4px;
+}
+
+.current-time { font-size: 12px; color: var(--muted); }
+
+.current-conf {
+  display: inline-block;
+  background: rgba(192,132,252,0.15);
+  color: var(--purple);
+  font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+  margin-top: 6px;
+}
+
+/* ===== تنبيه الطوارئ ===== */
+.emergency-banner {
+  margin: 16px;
+  background: linear-gradient(135deg, rgba(248,113,113,0.15), rgba(251,191,36,0.1));
+  border: 1px solid rgba(248,113,113,0.4);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: none; /* مخفي بالبداية */
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(248,113,113,0.4); }
+  50% { border-color: rgba(248,113,113,0.9); }
+}
+
+.emergency-banner.show { display: flex; align-items: center; gap: 12px; }
+
+.emergency-icon { font-size: 28px; flex-shrink: 0; }
+
+.emergency-text { flex: 1; }
+.emergency-title { font-size: 14px; font-weight: 700; color: var(--red); }
+.emergency-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.emergency-dismiss {
+  background: none; border: none; color: var(--muted);
+  font-size: 18px; cursor: pointer; padding: 4px;
+}
+
+/* ===== الأقسام ===== */
+.section { padding: 0 16px; margin-top: 20px; }
+
+.section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-title { font-size: 16px; font-weight: 700; color: #fff; }
+
+.section-action {
+  font-size: 12px; color: var(--purple); cursor: pointer;
+  background: none; border: none; font-family: 'Tajawal', sans-serif;
+}
+
+/* ===== إحصائيات اليوم ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.stat-emoji { font-size: 24px; margin-bottom: 6px; display: block; }
+.stat-count { font-size: 22px; font-weight: 900; color: #fff; }
+.stat-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* ===== سجل المشاعر ===== */
+.log-list { display: flex; flex-direction: column; gap: 8px; }
+
+.log-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.log-item.urgent { border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.05); }
+
+.log-emoji-wrap {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: rgba(192,132,252,0.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+
+.log-emoji-wrap.urgent { background: rgba(248,113,113,0.15); }
+
+.log-info { flex: 1; }
+.log-emotion { font-size: 14px; font-weight: 700; color: #fff; text-transform: capitalize; }
+.log-emotion-ar { font-size: 12px; color: var(--muted); }
+.log-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.log-conf {
+  font-size: 11px; font-weight: 700;
+  padding: 3px 8px; border-radius: 10px;
+  background: rgba(192,132,252,0.12);
+  color: var(--purple);
+}
+
+.log-conf.urgent { background: rgba(248,113,113,0.15); color: var(--red); }
+
+/* ===== رسالة فارغة ===== */
+.empty-state {
+  text-align: center; padding: 40px 20px;
+  color: var(--muted); font-size: 14px;
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; display: block; opacity: 0.5; }
+
+/* ===== زر التصدير ===== */
+.export-btn {
+  width: calc(100% - 32px);
+  margin: 16px;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--purple-dark), var(--purple));
+  border: none; border-radius: 14px;
+  color: #fff; font-size: 15px; font-weight: 700;
+  font-family: 'Tajawal', sans-serif;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; gap: 8px;
+  transition: opacity 0.2s;
+}
+.export-btn:active { opacity: 0.8; }
+
+/* ===== الشريط السفلي ===== */
+.bottom-bar {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 430px;
+  background: rgba(19,19,42,0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  padding: 10px 0 20px;
+  display: flex; justify-content: space-around;
+}
+
+.tab-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-family: 'Tajawal', sans-serif;
+  font-size: 10px; padding: 4px 20px;
+  transition: color 0.2s;
+}
+.tab-btn.active { color: var(--purple); }
+.tab-btn .tab-icon { font-size: 22px; }
+
+/* ===== إشعار منبثق داخل التطبيق ===== */
+.toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 20px;
+  font-size: 13px; color: #fff;
+  display: flex; align-items: center; gap: 8px;
+  z-index: 1000; opacity: 0;
+  transition: opacity 0.3s, top 0.3s;
+  white-space: nowrap;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+.toast.show { opacity: 1; top: 30px; }
+
+/* ===== مؤشر الاتصال ===== */
+.connection-status {
+  margin: 12px 16px 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.connection-status.connected { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+.connection-status.waiting { background: rgba(251,191,36,0.1); color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
+.status-dot-anim { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; animation: blink 1.5s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
+</head>
+<body>
+
+<!-- هيدر التطبيق -->
+<div class="header">
+  <div class="header-top">
+    <div class="app-name">🧠 مترجم الأحاسيس</div>
+    <div class="notif-btn" onclick="requestNotifPermission()" title="تفعيل الإشعارات">🔔</div>
+  </div>
+
+  <!-- بطاقة المشاعر الحالية -->
+  <div class="current-card">
+    <div class="current-label">◉ آخر حالة مرصودة</div>
+    <span class="current-emoji" id="cur-emoji">😶</span>
+    <div class="current-emotion" id="cur-emotion">في الانتظار</div>
+    <div class="current-time" id="cur-time">لم يُرصد شيء بعد</div>
+    <span class="current-conf" id="cur-conf">—</span>
+  </div>
+</div>
+
+<!-- مؤشر الاتصال -->
+<div class="connection-status waiting" id="conn-status">
+  <div class="status-dot-anim"></div>
+  <span id="conn-text">في انتظار بيانات من الكمبيوتر...</span>
+</div>
+
+<!-- بانر الطوارئ (مخفي بالبداية) -->
+<div class="emergency-banner" id="emergency-banner">
+  <div class="emergency-icon">🚨</div>
+  <div class="emergency-text">
+    <div class="emergency-title" id="emergency-title">تنبيه طوارئ!</div>
+    <div class="emergency-sub" id="emergency-sub">استمر شعور سلبي لأكثر من دقيقتين</div>
+  </div>
+  <button class="emergency-dismiss" onclick="dismissEmergency()">✕</button>
+</div>
+
+<!-- إحصائيات اليوم -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">إحصائيات اليوم</div>
+    <button class="section-action" onclick="clearLog()">مسح السجل</button>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-emoji">😊</span>
+      <div class="stat-count" id="stat-positive">0</div>
+      <div class="stat-label">إيجابي</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-emoji">😐</span>
+      <div class="stat-count" id="stat-neutral">0</div>
+      <div class="stat-label">محايد</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-emoji">😢</span>
+      <div class="stat-count" id="stat-negative">0</div>
+      <div class="stat-label">سلبي</div>
+    </div>
+  </div>
+</div>
+
+<!-- سجل المشاعر -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">سجل المشاعر</div>
+    <span style="font-size:11px;color:var(--muted)" id="log-count">0 سجل</span>
+  </div>
+  <div class="log-list" id="log-list">
+    <div class="empty-state">
+      <span class="icon">📋</span>
+      لم يُرصد أي مشاعر بعد<br>
+      <small>افتحي الكمبيوتر وابدئي التحليل</small>
+    </div>
+  </div>
+</div>
+
+<!-- زر التصدير -->
+<button class="export-btn" onclick="exportCSV()">
+  📊 تصدير السجل لملف Excel
+</button>
+
+<!-- الشريط السفلي -->
+<div class="bottom-bar">
+  <button class="tab-btn active">
+    <span class="tab-icon">🏠</span>الرئيسية
+  </button>
+  <button class="tab-btn">
+    <span class="tab-icon">📈</span>التقارير
+  </button>
+  <button class="tab-btn">
+    <span class="tab-icon">⚙️</span>الإعدادات
+  </button>
+</div>
+
+<!-- إشعار منبثق -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== البيانات المحفوظة في المتصفح ===== */
+// localStorage = ذاكرة دائمة في المتصفح، تبقى حتى بعد الإغلاق
+let moodLog = JSON.parse(localStorage.getItem('moodLog') || '[]');
+// هذا الحساب لكشف الطوارئ
+let negativeStreak = 0;      // كم مرة متتالية جاء شعور سلبي
+let negativeStartTime = null; // وقت بداية الشعور السلبي
+
+/* ===== الخرائط - ترجمة المشاعر ===== */
+const emojiMap = {
+  happy:'😊', sad:'😢', angry:'😠', surprised:'😲',
+  neutral:'😐', fear:'😨', disgust:'🤢', contempt:'😒'
+};
+const arMap = {
+  happy:'سعيد', sad:'حزين', angry:'غاضب', surprised:'مندهش',
+  neutral:'محايد', fear:'خائف', disgust:'اشمئزاز', contempt:'ازدراء'
+};
+// المشاعر السلبية التي تستدعي تنبيه
+const negativeEmotions = ['sad','angry','fear','disgust','contempt'];
+const positiveEmotions = ['happy','surprised'];
+
+/* ===== تسجيل Service Worker (الخادم الخفي) ===== */
+// هذا يمكّن الإشعارات حتى لو التطبيق مغلق
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(() => console.log('Service Worker مسجل ✓'))
+    .catch(e => console.log('خطأ:', e));
+}
+
+/* ===== طلب إذن الإشعارات ===== */
+async function requestNotifPermission() {
+  // نطلب من الهاتف إذن إرسال إشعارات
+  const result = await Notification.requestPermission();
+  if (result === 'granted') {
+    showToast('✅ تم تفعيل الإشعارات!');
+    // نرسل إشعار تجريبي
+    new Notification('مترجم الأحاسيس 🧠', {
+      body: 'الإشعارات تعمل بنجاح! ستصلك تنبيهات عن حالة طفلك.',
+      icon: '/icon-192.png'
+    });
+  } else {
+    showToast('⚠️ الرجاء السماح بالإشعارات من الإعدادات');
+  }
+}
+
+/* ===== الوظيفة الرئيسية: استقبال مشاعر جديدة ===== */
+// هذه الوظيفة تُستدعى من صفحة الكمبيوتر (index.html)
+function receiveEmotion(emotion, confidence) {
+  // نحفظ التوقيت
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('ar-EG');
+  const dateStr = now.toLocaleDateString('ar-EG');
+
+  // نضيف السجل لأول القائمة
+  const entry = { emotion, confidence, time: timeStr, date: dateStr, timestamp: now.getTime() };
+  moodLog.unshift(entry); // unshift = أضف للبداية
+
+  // نحفظ في ذاكرة المتصفح
+  localStorage.setItem('moodLog', JSON.stringify(moodLog));
+
+  // نحدث الواجهة
+  updateCurrentEmotion(emotion, confidence, timeStr);
+  renderLog();
+  updateStats();
+  checkEmergency(emotion, now);
+}
+
+/* ===== تحديث بطاقة المشاعر الحالية ===== */
+function updateCurrentEmotion(emotion, confidence, timeStr) {
+  const key = emotion.toLowerCase();
+  document.getElementById('cur-emoji').textContent = emojiMap[key] || '🤔';
+  document.getElementById('cur-emotion').textContent = emotion;
+  document.getElementById('cur-time').textContent = 'آخر رصد: ' + timeStr;
+  document.getElementById('cur-conf').textContent = 'ثقة: ' + Math.round(confidence * 100) + '%';
+
+  // تحديث مؤشر الاتصال
+  const connEl = document.getElementById('conn-status');
+  connEl.className = 'connection-status connected';
+  document.getElementById('conn-text').textContent = '● متصل — يستقبل البيانات من الكمبيوتر';
+}
+
+/* ===== فحص الطوارئ ===== */
+// لو استمر شعور سلبي أكثر من دقيقتين، نرسل تنبيه
+function checkEmergency(emotion, now) {
+  const key = emotion.toLowerCase();
+
+  if (negativeEmotions.includes(key)) {
+    // شعور سلبي
+    if (!negativeStartTime) negativeStartTime = now; // نبدأ العداد
+
+    const minutesElapsed = (now - negativeStartTime) / 60000; // كم دقيقة مرت
+
+    if (minutesElapsed >= 2 && negativeStreak === 0) {
+      // مرت دقيقتان! نرسل التنبيه
+      negativeStreak = 1;
+      triggerEmergency(emotion);
+    }
+    negativeStreak++;
+  } else {
+    // شعور إيجابي أو محايد - نصفّر العداد
+    negativeStreak = 0;
+    negativeStartTime = null;
+    dismissEmergency();
+  }
+}
+
+/* ===== إطلاق تنبيه الطوارئ ===== */
+function triggerEmergency(emotion) {
+  const key = emotion.toLowerCase();
+  const arEmotion = arMap[key] || emotion;
+
+  // نظهر البانر الأحمر
+  const banner = document.getElementById('emergency-banner');
+  banner.classList.add('show');
+  document.getElementById('emergency-title').textContent = '🚨 تنبيه: شعور مستمر!';
+  document.getElementById('emergency-sub').textContent =
+    `طفلك يشعر بـ"${arEmotion}" منذ أكثر من دقيقتين`;
+
+  // نرسل إشعار للهاتف
+  sendNotification(
+    '🚨 تنبيه طوارئ — مترجم الأحاسيس',
+    `طفلك يشعر بـ"${arEmotion}" منذ أكثر من دقيقتين. يحتاج انتباهك!`,
+    true // urgent = إشعار طارئ
+  );
+}
+
+/* ===== إرسال الإشعار ===== */
+function sendNotification(title, body, urgent = false) {
+  // أولاً: إشعار عادي في المتصفح
+  if (Notification.permission === 'granted') {
+    new Notification(title, { body, icon: '/icon-192.png', vibrate: urgent ? [300,100,300] : [200] });
+  }
+  // ثانياً: عبر Service Worker (يشتغل حتى لو التطبيق مغلق)
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'SHOW_NOTIFICATION', title, body, urgent });
+  }
+}
+
+/* ===== إخفاء بانر الطوارئ ===== */
+function dismissEmergency() {
+  document.getElementById('emergency-banner').classList.remove('show');
+}
+
+/* ===== رسم قائمة السجل ===== */
+function renderLog() {
+  const list = document.getElementById('log-list');
+  document.getElementById('log-count').textContent = moodLog.length + ' سجل';
+
+  if (moodLog.length === 0) {
+    list.innerHTML = `<div class="empty-state"><span class="icon">📋</span>لم يُرصد أي مشاعر بعد<br><small>افتحي الكمبيوتر وابدئي التحليل</small></div>`;
+    return;
+  }
+
+  // نرسم أول 20 سجل فقط (عشان ما يثقل الصفحة)
+  list.innerHTML = moodLog.slice(0, 20).map(entry => {
+    const key = entry.emotion.toLowerCase();
+    const isUrgent = negativeEmotions.includes(key);
+    return `
+      <div class="log-item ${isUrgent ? 'urgent' : ''}">
+        <div class="log-emoji-wrap ${isUrgent ? 'urgent' : ''}">${emojiMap[key] || '🤔'}</div>
+        <div class="log-info">
+          <div class="log-emotion">${entry.emotion}</div>
+          <div class="log-emotion-ar">${arMap[key] || entry.emotion}</div>
+          <div class="log-time">🕐 ${entry.time} — ${entry.date}</div>
+        </div>
+        <div class="log-conf ${isUrgent ? 'urgent' : ''}">${Math.round(entry.confidence * 100)}%</div>
+      </div>`;
+  }).join('');
+}
+
+/* ===== تحديث الإحصائيات ===== */
+function updateStats() {
+  let pos = 0, neu = 0, neg = 0;
+  moodLog.forEach(e => {
+    const k = e.emotion.toLowerCase();
+    if (positiveEmotions.includes(k)) pos++;
+    else if (negativeEmotions.includes(k)) neg++;
+    else neu++;
+  });
+  document.getElementById('stat-positive').textContent = pos;
+  document.getElementById('stat-neutral').textContent = neu;
+  document.getElementById('stat-negative').textContent = neg;
+}
+
+/* ===== تصدير CSV (يفتح في Excel) ===== */
+function exportCSV() {
+  if (moodLog.length === 0) { showToast('⚠️ السجل فارغ!'); return; }
+
+  // نبني محتوى الملف
+  let csv = 'التاريخ,الوقت,المشاعر,المشاعر بالعربي,نسبة الثقة\n';
+  moodLog.forEach(e => {
+    const k = e.emotion.toLowerCase();
+    csv += `${e.date},${e.time},${e.emotion},${arMap[k]||e.emotion},${Math.round(e.confidence*100)}%\n`;
+  });
+
+  // نحمّله كملف
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'سجل_المشاعر_' + new Date().toLocaleDateString('ar-EG').replace(/\//g,'-') + '.csv';
+  a.click();
+  showToast('✅ تم تحميل الملف!');
+}
+
+/* ===== مسح السجل ===== */
+function clearLog() {
+  if (!confirm('هل تريدين مسح كل السجل؟')) return;
+  moodLog = [];
+  localStorage.removeItem('moodLog');
+  negativeStreak = 0;
+  negativeStartTime = null;
+  renderLog();
+  updateStats();
+  showToast('🗑️ تم مسح السجل');
+}
+
+/* ===== إظهار رسالة منبثقة مؤقتة ===== */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000); // تختفي بعد 3 ثوانٍ
+}
+
+/* ===== للاستخدام من BroadcastChannel (التواصل بين الصفحات) ===== */
+// هذا يسمح لصفحة الكمبيوتر أن ترسل للتطبيق مباشرة
+const channel = new BroadcastChannel('emotion-channel');
+channel.onmessage = event => {
+  const { emotion, confidence } = event.data;
+  if (emotion) receiveEmotion(emotion, confidence || 0.9);
+};
+
+/* ===== تحميل السجل المحفوظ عند الفتح ===== */
+window.addEventListener('load', () => {
+  renderLog();
+  updateStats();
+  // للتجربة فقط: تستطيعين حذف هذا السطر لاحقاً
+  // receiveEmotion('happy', 0.92); // اختبار
+});
+</script>
+</body>
+</html>

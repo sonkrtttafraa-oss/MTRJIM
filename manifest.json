@@ -1,0 +1,20 @@
+{
+  "name": "مترجم الأحاسيس",
+  "short_name": "أحاسيس",
+  "description": "نظام ذكاء اصطناعي لرصد مشاعر الأطفال",
+  "start_url": "/app.html",
+  "display": "standalone",
+  "background_color": "#0a0a1a",
+  "theme_color": "#c084fc",
+  "orientation": "portrait",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "https://api.iconify.design/twemoji/brain.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
